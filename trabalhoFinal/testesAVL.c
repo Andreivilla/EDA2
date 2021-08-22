@@ -1,290 +1,230 @@
 #include"geradorLeitor.h"
-typedef struct no {
-    struct no* pai;
-    struct no* esquerda;
-    struct no* direita;
-    int valor;
-} No;
+typedef struct Node
+{
+    int key;
+    struct Node *left;
+    struct Node *right;
+    int altura;
+} Node;
 
-typedef struct arvore {
-    struct no* raiz;
-} Arvore;
+typedef struct AvlTree
+{
+    struct Node *root;
+} AvlTree;
 
-void balanceamento(Arvore*, No*);
-int altura(No*);
-int fb(No*);
-No* rsd(Arvore*, No*);
-No* rse(Arvore*, No*);
-No* rdd(Arvore*, No*);
-No* rde(Arvore*, No*);
+int altura(struct Node *N)
+{
+    if (N == NULL)
+        return 0;
+    return N->altura;
+}
 
+int max(int a, int b)
+{
+    return (a > b) ? a : b;
+}
 int contador = 0;
-
-Arvore* criar() {
-    Arvore *arvore = malloc(sizeof(Arvore));
-    arvore->raiz = NULL;
-
-    return arvore;
+AvlTree *criar()
+{
+    struct AvlTree *a = malloc(sizeof(AvlTree));
+    a->root = NULL;
+    return a;
 }
 
-int vazia(Arvore* arvore) {
-    return arvore->raiz == NULL;
+Node *newNode(int key)
+{
+    struct Node *node = (struct Node *)malloc(sizeof(struct Node));
+    node->key = key;
+    node->left = NULL;
+    node->right = NULL;
+    node->altura = 1;
+    return (node);
 }
 
-No* adicionarNo(No* no, int valor) {
-    if (valor > no->valor) {
-        if (no->direita == NULL) {
-            printf("Adicionando %d\n",valor);
-            No* novo = malloc(sizeof(No));
-            novo->valor = valor;
-            novo->pai = no;
+struct Node *rightRotate(AvlTree *A, struct Node *y)
+{
+    struct Node *x = y->left;
+    struct Node *T2 = x->right;
 
-            no->direita = novo;
-				
-            return novo;
-        } else {
-            return adicionarNo(no->direita, valor);
-        }
-    } else {
-        if (no->esquerda == NULL) {
-            printf("Adicionando %d\n",valor);
-            No* novo = malloc(sizeof(No));
-			novo->valor = valor;
-            novo->pai = no;
-			
-            no->esquerda = novo;
-			
-            return novo;
-        } else {
-            return adicionarNo(no->esquerda, valor);
-        }
-    }
+    //rotação
+    x->right = y;
+    y->left = T2;
+
+    //alturas atualizadas
+    y->altura = max(altura(y->left), altura(y->right)) + 1;
+    x->altura = max(altura(x->left), altura(x->right)) + 1;
+
+    //nova raiz
+    return x;
 }
 
-No* adicionar(Arvore* arvore, int valor) {
-    if (arvore->raiz == NULL) {
-        printf("Adicionando %d\n",valor);
-        No* novo = malloc(sizeof(No));
-        novo->valor = valor;
-        
-        arvore->raiz = novo;
-			
-        return novo;
-    } else {
-        No* no = adicionarNo(arvore->raiz, valor);
-        balanceamento(arvore, no);
-        
-        return no;
-    }
+struct Node *leftRotate(AvlTree *A, struct Node *x)
+{
+    struct Node *y = x->right;
+    struct Node *T2 = y->left;
+
+    // Perform rotation
+    y->left = x;
+    x->right = T2;
+
+    //alturas atualizadas
+    x->altura = max(altura(x->left), altura(x->right)) + 1;
+    y->altura = max(altura(y->left), altura(y->right)) + 1;
+
+    //nova raiz
+    return y;
 }
 
-void remover(Arvore* arvore, No* no) {
-    if (no->esquerda != NULL) {
-        remover(arvore, no->esquerda); 
-    }
-
-    if (no->direita != NULL) {
-        remover(arvore, no->direita);
-    }
-
-    if (no->pai == NULL) {
-        arvore->raiz = NULL;
-    } else {
-        if (no->pai->esquerda == no) {
-            no->pai->esquerda = NULL;
-        } else {
-            no->pai->direita = NULL;
-        }
-    }
-
-    free(no);
+// Get Balance factor of node N
+int fatorBalanceamento(struct Node *N)
+{
+    if (N == NULL)
+        return 0;
+    return altura(N->left) - altura(N->right);
 }
 
-No* localizar(No* no, int valor) {
-    if (no->valor == valor) {
-        return no;
-    } else {
-        if (valor < no->valor) {
-            if (no->esquerda != NULL) {
-                return localizar(no->esquerda, valor);
-            }
-        } else {
-            if (no->direita != NULL) {
-                return localizar(no->direita, valor);
-            }
-        }
-    }
+//Um pouco de mágica acontece aqui, caso não acredite, pule para proxima função
+struct Node *adiciona(AvlTree *A, struct Node *node, int key)
+{
+    //Verificando onde será inserção
+    if (node == NULL)
+        return (newNode(key));
+    if (key < node->key)
+        node->left = adiciona(A, node->left, key);
+    else if (key > node->key)
+        node->right = adiciona(A, node->right, key);
+    else
+        return node;
 
-    return NULL;
-}
+    node->altura = 1 + max(altura(node->left), altura(node->right));
 
-void percorrerProfundidadeInOrder(No* no, void (*callback)(int)) {
-    if (no != NULL) {
-        percorrerProfundidadeInOrder(no->esquerda,callback);
-        callback(no->valor);
-        percorrerProfundidadeInOrder(no->direita,callback);
-    }
-}
+    //descobre o se o nodo está desbalanceado
+    int balance = fatorBalanceamento(node);
 
-void percorrerProfundidadePreOrder(No* no, void (*callback)(int)) {
-    if (no != NULL) {
-        callback(no->valor);
-        percorrerProfundidadePreOrder(no->esquerda,callback);
-        percorrerProfundidadePreOrder(no->direita,callback);
-    }
-}
-
-void percorrerProfundidadePosOrder(No* no, void (callback)(int)) {
-    if (no != NULL) {
-        percorrerProfundidadePosOrder(no->esquerda,callback);
-        percorrerProfundidadePosOrder(no->direita,callback);
-        callback(no->valor);
-    }
-}
-
-void visitar(int valor){
-    printf("%d ", valor);
-}
-
-void balanceamento(Arvore* arvore, No* no) {
-    while (no != NULL) {
+    //então se necessário realiza o balanceamento
+    contador++;
+    //rsd
+    if (balance > 1 && key < node->left->key){
         contador++;
-        int fator = fb(no);
+        return rightRotate(A, node);
+    }
 
-        if (fator > 1) { //árvore mais pesada para esquerda
+    //rse
+    if (balance < -1 && key > node->right->key){
         contador++;
-            //rotação para a direita
-            if (fb(no->esquerda) > 0) {
-                contador++;
-                printf("RSD(%d)\n",no->valor);
-                rsd(arvore, no); //rotação simples a direita, pois o FB do filho tem sinal igual
-            } else {
-                printf("RDD(%d)\n",no->valor);
-                rdd(arvore, no); //rotação dupla a direita, pois o FB do filho tem sinal diferente
-            }
-        } else if (fator < -1) { //árvore mais pesada para a direita
-            contador++;
-            //rotação para a esquerda
-            if (fb(no->direita) < 0) {
-                contador++;
-                printf("RSE(%d)\n",no->valor);
-                rse(arvore, no); //rotação simples a esquerda, pois o FB do filho tem sinal igual
-            } else {
-                contador++;
-                printf("RDE(%d)\n",no->valor);
-                rde(arvore, no); //rotação dupla a esquerda, pois o FB do filho tem sinal diferente
-            }
-        }
+        return leftRotate(A, node);
+    }
 
-        no = no->pai; 
+    //rdd
+    if (balance > 1 && key > node->left->key)
+    {
+        contador++;
+        node->left = leftRotate(A, node->left);
+        return rightRotate(A, node);
+    }
+
+    //rde
+    if (balance < -1 && key < node->right->key)
+    {
+        contador++;
+        node->right = rightRotate(A, node->right);
+        return leftRotate(A, node);
+    }
+
+    return node;
+}
+
+// A utility function to print preorder traversal
+// of the tree.
+// The function also prints altura of every node
+void preOrder(struct Node *root)
+{
+    if (root != NULL)
+    {
+        printf("%d ", root->key);
+        preOrder(root->left);
+        preOrder(root->right);
     }
 }
 
-int altura(No* no){
-    int esquerda = 0,direita = 0;
-
-    if (no->esquerda != NULL) {
-        esquerda = altura(no->esquerda) + 1;
-    }
-
-    if (no->direita != NULL) {
-        direita = altura(no->direita) + 1;
-    }
-
-    return esquerda > direita ? esquerda : direita; //max(esquerda,direita)
-}
-
-int fb(No* no) {
-    int esquerda = 0,direita = 0;
-
-    if (no->esquerda != NULL) {
-        esquerda = altura(no->esquerda) + 1;
-    }
-
-    if (no->direita != NULL) {
-        direita = altura(no->direita) + 1;
-    }
-
-    return esquerda - direita;
-}
-
-No* rse(Arvore* arvore, No* no) {
-    No* pai = no->pai;
-    No* direita = no->direita;
-
-    no->direita = direita->esquerda;
-    no->pai = direita;
-
-    direita->esquerda = no;
-    direita->pai = pai;
-
-    if (pai == NULL) {
-        arvore->raiz = direita;
-    } else {
-        if (pai->esquerda == no) {
-            pai->esquerda = direita;
-        } else {
-            pai->direita = direita;
-        }
-    }
-
-    return direita;
-}
-
-No* rsd(Arvore* arvore, No* no) {
-    No* pai = no->pai;
-    No* esquerda = no->esquerda;
-
-    no->esquerda = esquerda->direita;
-    no->pai = esquerda;
-
-    esquerda->direita = no;
-    esquerda->pai = pai;
-
-    if (pai == NULL) {
-        arvore->raiz = esquerda;
-    } else {
-        if (pai->esquerda == no) {
-            pai->esquerda = esquerda;
-        } else {
-            pai->direita = esquerda;
-        }
-    }
-
-    return esquerda;
-}
-
-No* rde(Arvore* arvore, No* no) {
-    no->direita = rsd(arvore, no->direita);
-    return rse(arvore, no);
-}
-
-No* rdd(Arvore* arvore, No* no) {
-    no->esquerda = rse(arvore, no->esquerda);
-    return rsd(arvore, no);
-}
-
-/*int main() {
-    Arvore* a = criar();
-
-    for (int i = 1; i <= 7; i++) {
-        adicionar(a,i);  
-    }
-
-    printf("In-order: ");
-    percorrerProfundidadeInOrder(a->raiz,visitar);
-    printf("\n");
+/*
+int main()
+{
+    //struct Node *root = NULL;
+    AvlTree *arvore = criar();
+    
+    arvore->root = adiciona(arvore, arvore->root , 10);
+    arvore->root = adiciona(arvore, arvore->root , 20);
+    arvore->root = adiciona(arvore, arvore->root , 30);
+    arvore->root = adiciona(arvore, arvore->root , 40);
+    arvore->root = adiciona(arvore, arvore->root , 50);
+    arvore->root = adiciona(arvore, arvore->root , 25);
+    
+   
+  printf("Preorder traversal of the constructed AVL"
+         " tree is \n");
+  preOrder(arvore->root);
+  return 0;
 }*/
+int main(int argc, char const *argv[]){    
+    int i,j;
+    int tam;
+    int testePiorCaso[100], testeCasoMedio[100];
+    AvlTree* arvoreOrdem;
+    AvlTree* arvoreAleatoria;
 
-int main(int argc, char const *argv[]){
-    Arvore* a = criar();
-    //gerarArquivos();
-    int* listaTeste = pegarAleatorio();
-    for(int i=0; i<TAM; i++){
-        //printf("%d\n", listaTeste[i]);
-        adicionar(a, listaTeste[i]);
+    for(i=0; i<100; i++){
+        //criar arvores
+        arvoreOrdem = criar();
+        arvoreAleatoria = criar();
+        
+        //gerar arquivos
+        tam = i+1;
+        printf("\ni: %d\n", tam);
+        gerarArquivos(tam);
+
+        //teste em ordem
+        int* listaOrdem = pegarOrdem(tam);
+        printf("\nLista ordem\n");
+        printaLista(listaOrdem, tam);
+        //inserir valores
+        for(j=0; j<tam; j++){
+            arvoreOrdem->root = adiciona(arvoreOrdem, arvoreOrdem->root, listaOrdem[j]);
+        }
+        testePiorCaso[i] = contador;
+
+        contador = 0;
+
+        //teste aleatorio
+        int* listaAleatoria = pegarAleatorio(tam);
+        printf("\nLista alaeatoria\n");
+        printaLista(listaAleatoria, tam);
+        //inserir valores
+        for(j=0; j<tam; j++){
+            arvoreAleatoria->root = adiciona(arvoreAleatoria, arvoreAleatoria->root, listaAleatoria[j]);
+        }
+        testeCasoMedio[i] = contador;
+        //reinicia arvores
+        free(arvoreAleatoria);
+        free(arvoreOrdem);
     }
-    printf("Contador: %d", contador);
 
+    //vetor formatado python
+    printf("\n\nPior caso: ");
+    printf("{");
+    for(i=0; i<100; i++){
+        if(i==100-1)
+            printf("%d}\n", testePiorCaso[i]);
+        else
+            printf("%d, ", testePiorCaso[i]);
+    }
+    printf("\n\ncaso medio: ");
+    printf("{");
+    for(i=0; i<100; i++){
+        if(i==100-1)
+            printf("%d}\n", testeCasoMedio[i]);
+        else
+            printf("%d, ", testeCasoMedio[i]);
+    }
     return 0;
 }

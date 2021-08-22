@@ -231,18 +231,18 @@ int main(int argc, char const *argv[]){
 
     //vetor formatado python
     printf("\n\nPior caso: ");
-    printf("[");
+    printf("{");
     for(i=0; i<100; i++){
         if(i==100-1)
-            printf("%d]\n", testePiorCaso[i]);
+            printf("%d}\n", testePiorCaso[i]);
         else
             printf("%d, ", testePiorCaso[i]);
     }
     printf("\n\ncaso medio: ");
-    printf("[");
+    printf("{");
     for(i=0; i<100; i++){
         if(i==100-1)
-            printf("%d]\n", testeCasoMedio[i]);
+            printf("%d}\n", testeCasoMedio[i]);
         else
             printf("%d, ", testeCasoMedio[i]);
     }

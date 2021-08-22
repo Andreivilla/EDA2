@@ -26,7 +26,7 @@ int vazia(Arvore*);
 No* adicionar(Arvore*, int);
 No* localizar(Arvore* arvore, int valor);
 
-contador=0;
+int contador=0;
 
 Arvore* criar() {
     Arvore *arvore = malloc(sizeof(Arvore));
@@ -229,30 +229,66 @@ void rotacionarDireita(Arvore* arvore, No* no) {
     no->pai = esquerda;
 }
 
-/*int main() {
-    Arvore* a = criar();
 
-    adicionar(a,7);
-    adicionar(a,6);
-    adicionar(a,5);
-    adicionar(a,4);
-    adicionar(a,3);
-    adicionar(a,2);
-    adicionar(a,1);
+int main(int argc, char const *argv[]){    
+    int i,j;
+    int tam;
+    int testePiorCaso[100], testeCasoMedio[100];
+    Arvore* arvoreOrdem;
+    Arvore* arvoreAleatoria;
 
-    printf("In-order: ");
-    percorrerProfundidadeInOrder(a, a->raiz,visitar);
-    printf("\n");
-}*/
-int main(int argc, char const *argv[]){
-    Arvore* a = criaArvore(1);
-    //gerarArquivos();
-    int* listaTeste = pegarAleatorio();
-    for(int i=0; i<TAM; i++){
-        //printf("%d\n", listaTeste[i]);
-        adiciona(a, listaTeste[i]);
+    for(i=0; i<100; i++){
+        //criar arvores
+        arvoreOrdem = criar(1);
+        arvoreAleatoria = criar(1);
+        
+        //gerar arquivos
+        tam = i+1;
+        printf("\ni: %d\n", tam);
+        gerarArquivos(tam);
+
+        //teste em ordem
+        int* listaOrdem = pegarOrdem(tam);
+        printf("\nLista ordem\n");
+        printaLista(listaOrdem, tam);
+        //inserir valores
+        for(j=0; j<tam; j++){
+            adicionar(arvoreOrdem, listaOrdem[j]);
+        }
+        testePiorCaso[i] = contador;
+
+        contador = 0;
+
+        //teste aleatorio
+        int* listaAleatoria = pegarAleatorio(tam);
+        printf("\nLista alaeatoria\n");
+        printaLista(listaAleatoria, tam);
+        //inserir valores
+        for(j=0; j<tam; j++){
+            adicionar(arvoreAleatoria, listaAleatoria[j]);
+        }
+        testeCasoMedio[i] = contador;
+        //reinicia arvores
+        free(arvoreAleatoria);
+        free(arvoreOrdem);
     }
-    printf("Contador: %d", contador);
 
+    //vetor formatado python
+    printf("\n\nPior caso: ");
+    printf("{");
+    for(i=0; i<100; i++){
+        if(i==100-1)
+            printf("%d}\n", testePiorCaso[i]);
+        else
+            printf("%d, ", testePiorCaso[i]);
+    }
+    printf("\n\ncaso medio: ");
+    printf("{");
+    for(i=0; i<100; i++){
+        if(i==100-1)
+            printf("%d}\n", testeCasoMedio[i]);
+        else
+            printf("%d, ", testeCasoMedio[i]);
+    }
     return 0;
 }
