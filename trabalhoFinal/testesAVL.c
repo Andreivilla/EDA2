@@ -209,7 +209,7 @@ int main(int argc, char const *argv[]){
         free(arvoreOrdem);
     }
 
-    //vetor formatado python
+    //vetor formatado vetor c
     printf("\n\nPior caso: ");
     printf("{");
     for(i=0; i<100; i++){
