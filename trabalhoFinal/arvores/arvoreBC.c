@@ -189,16 +189,20 @@ void adicionaChave(ArvoreB* arvore, int chave) {
 }
 
 int main() {
-    ArvoreB* arvore = criaArvore(1);
+    ArvoreB* arvore = criaArvore(2);
     
     contador = 0;
-
-    adicionaChave(arvore, 12);
-    adicionaChave(arvore, 3);
-    adicionaChave(arvore, 5);
-    adicionaChave(arvore, 7);
+    //20, 15, 10, 3, 8, 4, 11, 5, 13, 18 e 1
+    adicionaChave(arvore, 20);
     adicionaChave(arvore, 15);
-    adicionaChave(arvore, 99);
+    adicionaChave(arvore, 10);
+    adicionaChave(arvore, 3);
+    adicionaChave(arvore, 8);
+    adicionaChave(arvore, 4);
+    adicionaChave(arvore, 11);
+    adicionaChave(arvore, 5);
+    adicionaChave(arvore, 13);
+    adicionaChave(arvore, 18);
     adicionaChave(arvore, 1);
 
     percorreArvore(arvore->raiz);
